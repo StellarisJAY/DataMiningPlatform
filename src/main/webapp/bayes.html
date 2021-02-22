@@ -1,0 +1,257 @@
+<html>
+<head>
+    <title>贝叶斯分类</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="css/element-ui.css">
+</head>
+
+<body>
+    <div id="app" style="height:100%">
+        <el-row>
+            <el-col :span="3">
+                <el-menu
+                default-active="1"
+                background-color="#545c64"
+                text-color="#fff"
+                active-text-color="#ffd04b"
+                style="height:100vh">
+                    <el-menu-item index="1" onclick="location='/bayes'">
+                        <span slot="title">朴素贝叶斯分类</span>
+                    </el-menu-item>
+                    <el-menu-item index="2" onclick="location='/apriori'">
+                        <span slot="title">关联规则</span>
+                    </el-menu-item>
+                    <el-menu-item index="3" onclick="location='/kmeans'">
+                        <span slot="title">K-means聚类算法</span>
+                    </el-menu-item>
+                </el-menu>
+            </el-col>
+            <el-col :span="21">
+                <el-menu mode="horizontal">
+                    <el-col :span="4">
+                        <el-menu-item >数据挖掘分析平台</el-menu-item>
+                    </el-col>
+                    <el-col :span="18">
+                        <p></p>
+                    </el-col>
+                    <el-col :span="2">
+                        <el-menu-item><a href=""><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8.837 1.626c-.246-.835-1.428-.835-1.674 0l-.094.319A1.873 1.873 0 0 1 4.377 3.06l-.292-.16c-.764-.415-1.6.42-1.184 1.185l.159.292a1.873 1.873 0 0 1-1.115 2.692l-.319.094c-.835.246-.835 1.428 0 1.674l.319.094a1.873 1.873 0 0 1 1.115 2.693l-.16.291c-.415.764.42 1.6 1.185 1.184l.292-.159a1.873 1.873 0 0 1 2.692 1.116l.094.318c.246.835 1.428.835 1.674 0l.094-.319a1.873 1.873 0 0 1 2.693-1.115l.291.16c.764.415 1.6-.42 1.184-1.185l-.159-.291a1.873 1.873 0 0 1 1.116-2.693l.318-.094c.835-.246.835-1.428 0-1.674l-.319-.094a1.873 1.873 0 0 1-1.115-2.692l.16-.292c.415-.764-.42-1.6-1.185-1.184l-.291.159A1.873 1.873 0 0 1 8.93 1.945l-.094-.319zm-2.633-.283c.527-1.79 3.065-1.79 3.592 0l.094.319a.873.873 0 0 0 1.255.52l.292-.16c1.64-.892 3.434.901 2.54 2.541l-.159.292a.873.873 0 0 0 .52 1.255l.319.094c1.79.527 1.79 3.065 0 3.592l-.319.094a.873.873 0 0 0-.52 1.255l.16.292c.893 1.64-.902 3.434-2.541 2.54l-.292-.159a.873.873 0 0 0-1.255.52l-.094.319c-.527 1.79-3.065 1.79-3.592 0l-.094-.319a.873.873 0 0 0-1.255-.52l-.292.16c-1.64.893-3.433-.902-2.54-2.541l.159-.292a.873.873 0 0 0-.52-1.255l-.319-.094c-1.79-.527-1.79-3.065 0-3.592l.319-.094a.873.873 0 0 0 .52-1.255l-.16-.292c-.892-1.64.902-3.433 2.541-2.54l.292.159a.873.873 0 0 0 1.255-.52l.094-.319z"/>
+                            <path fill-rule="evenodd" d="M8 5.754a2.246 2.246 0 1 0 0 4.492 2.246 2.246 0 0 0 0-4.492zM4.754 8a3.246 3.246 0 1 1 6.492 0 3.246 3.246 0 0 1-6.492 0z"/>
+                          </svg></a></el-menu-item>
+                    </el-col>
+                </el-menu>
+                <el-main>
+                    <el-row>
+                        <el-col :span="16">
+                            <el-card class="box-card">
+                                <div slot="header" class="clearfix">
+                                    <span>训练数据</span>
+                                </div>
+                                <el-form ref="form" :model="trainDataForm" label-width="80px" size="small">
+                                    <el-form-item label="数据来源">
+                                        <el-select v-model="trainDataForm.type" placeholder="请选择">
+                                            <el-option label="MySQL" value="db"></el-option>
+                                            <el-option label="文件" value="file"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <div v-if="trainDataForm.type=='db'">
+                                        <el-form-item label="数据库">
+                                            <el-input v-model="trainDataForm.dbAddress"></el-input>
+                                        </el-form-item>
+                                        <el-form-item label="表名">
+                                            <el-input v-model="trainDataForm.dbTable"></el-input>
+                                        </el-form-item>
+                                        <el-form-item label="用户名">
+                                            <el-input v-model="trainDataForm.dbUsername"></el-input>
+                                        </el-form-item>
+                                        <el-form-item label="密码">
+                                            <el-input type="password" v-model="trainDataForm.dbPassword"></el-input>
+                                        </el-form-item>
+                                    </div>
+                                    <div v-if="trainDataForm.type=='file'">
+                                        <el-form-item label="训练数据">
+                                            <input type="file" v-model="trainDataForm.file" @change="getTrainDataFile($event)">
+                                        </el-form-item>
+                                    </div>
+                                </el-form>
+                                <el-form :inline="true" size="small">
+                                    <el-form-item label="条件起始位置">
+                                        <el-input type="text" v-model="trainDataForm.paramBegin" placeholder="从0开始的列号">
+                                    </el-form-item>
+                                    <el-form-item label="条件结束位置">
+                                        <el-input type="text" v-model="trainDataForm.paramEnd" placeholder="从0开始的列号">
+                                    </el-form-item>
+                                    <el-form-item label="结果值位置">
+                                        <el-input type="text" v-model="trainDataForm.resultPos" placeholder="从0开始的列号">
+                                    </el-form-item>
+                                </el-form>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="1">
+                            <p></p>
+                        </el-col>
+                        <el-col :span="7">
+                            <el-card class="box-card">
+                                <div slot="header" class="clearfix">
+                                    <span>测试数据</span>
+                                </div>
+                                <el-form ref="form" :model="testDataForm" label-width="80px">
+                                    <el-form-item label="数据来源">
+                                        <el-select v-model="testDataForm.type" placeholder="请选择">
+                                            <el-option label="MySQL" value="db"></el-option>
+                                            <el-option label="文件" value="file"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <div v-if="testDataForm.type=='db'">
+                                        <el-form-item label="数据库">
+                                            <el-input v-model="testDataForm.dbAddress"></el-input>
+                                        </el-form-item>
+                                        <el-form-item label="表名">
+                                            <el-input v-model="testDataForm.dbTable"></el-input>
+                                        </el-form-item>
+                                        <el-form-item label="用户名">
+                                            <el-input v-model="testDataForm.dbUsername"></el-input>
+                                        </el-form-item>
+                                        <el-form-item label="密码">
+                                            <el-input type="password" v-model="testDataForm.dbPassword"></el-input>
+                                        </el-form-item>
+                                    </div>
+                                    <div v-if="testDataForm.type=='file'">
+                                        <el-form-item label="测试数据">
+                                            <input type="file" v-model="testDataForm.file" @change="getTestDataFile($event)">
+                                        </el-form-item>
+                                    </div>
+                                </el-form>
+                            </el-card>
+                        </el-col>
+                    </el-row>
+                    <el-row style="margin-top:20px">
+                        <el-card class="box-card">
+                            <div slot="header" class="clearfix">
+                                <span>分析结果</span>
+                                <el-button type="primary" size="mini" style="float:right; margin-top:0" @click="getBayesResult()">分析</el-button>
+                            </div>
+                            <el-table :data="result" height="230px" v-if="result != null">
+                                <el-table-column prop="input" label="输入">
+                                    <template slot-scope="scope">
+                                        {{scope.row.input}}
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="prediction" label="分类结果"></el-table-column>
+                                <el-table-column label="概率">
+                                    <template slot-scope="scope">
+                                        {{scope.row.probabilities}}
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </el-card>
+                    </el-row>
+                </el-main>
+            </el-col>
+        </el-row>
+    </div>
+</body>
+
+<script src="js/vue.js"></script>
+<script src="js/element-ui.js"></script>
+<script src="js/axios.min.js"></script>
+<script src="js/settings.js"></script>
+<script>
+    new Vue({
+        el: "#app",
+        data: {
+            message: "Bayes",
+            trainDataForm: {
+                type: 'file',
+                file: null,
+                paramBegin: null,
+                paramEnd: null,
+                resultPos: null,
+
+                dbAddress: '',
+                dbTable: '',
+                dbPassword: '',
+                dbUsername: ''
+            },
+            testDataForm: {
+                type: 'file',
+                file: null,
+                dbAddress: '',
+                dbTable: '',
+                dbPassword: '',
+                dbUsername: ''
+            },
+            trainDataFile: null,
+            testDataFile: null,
+            result:null
+        },
+        mounted(){
+            this.testModule()
+        },
+        methods: {
+            getBayesResult(){
+                if(this.trainDataForm.type=='file' && this.testDataForm.type=='file'){
+                    if (this.trainDataForm.file == null){
+                        this.$message({
+                            message: '请上传训练数据',
+                            type: 'warning'
+                        })
+                    }
+                    else if (this.testDataForm.file == null){
+                        this.$message({
+                            message: '请上传测试数据',
+                            type: 'warning'
+                        })
+                    }
+                    else{
+                        let formData = new FormData()
+                        formData.append("file1", this.trainDataFile)
+                        formData.append("file2", this.testDataFile)
+                        formData.append("trainDataBegin", this.trainDataForm.paramBegin)
+                        formData.append("trainDataEnd", this.trainDataForm.paramEnd)
+                        formData.append("trainDataResultPos", this.trainDataForm.resultPos)
+                        let that = this
+                        axios.post(config.baseUrl + "/bayes/result", formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        })
+                        .then(response=>{
+                            console.log(response.status)
+                            that.result = response.data                           
+                        })
+                    }
+                }
+                else{
+                    this.$message({
+                        message: '暂不支持从数据库导入数据',
+                        type: 'warning'
+                    })
+                }
+            },
+            getTrainDataFile(event){
+                this.trainDataFile = event.target.files[0]
+            },
+            getTestDataFile(event){
+                this.testDataFile = event.target.files[0]
+            },
+            testModule(){
+                request.get("/bayes")
+                .then((response)=>{
+                    console.log(response)
+                })
+                .catch((error)=>{
+                    console.log(error)
+                })
+            }
+        }
+    })
+</script>
+<style>
+body{
+    margin:0px;
+    background-color:#f0f5f5
+}
+</style>
+</html>

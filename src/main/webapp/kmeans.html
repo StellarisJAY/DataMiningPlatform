@@ -1,0 +1,220 @@
+<html>
+<head>
+    <title>Kmeans聚类</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="css/element-ui.css">
+</head>
+
+<body>
+    <div id="app" style="height:100%">
+        <el-row>
+            <el-col :span="3">
+                <el-menu class="el-menu-vertical-demo"
+                default-active="3"
+                background-color="#545c64"
+                text-color="#fff"
+                active-text-color="#ffd04b"
+                style="height:100vh">
+                    <el-menu-item index="1" onclick="location='/bayes'">
+                        <span slot="title">朴素贝叶斯分类</span>
+                    </el-menu-item>
+                    <el-menu-item index="2" onclick="location='/apriori'">
+                        <span slot="title">关联规则</span>
+                    </el-menu-item>
+                    <el-menu-item index="3" onclick="location='/kmeans'">
+                        <span slot="title">K-means聚类算法</span>
+                    </el-menu-item>
+                </el-menu>
+            </el-col>
+            <el-col :span="21">
+                <el-menu mode="horizontal">
+                    <el-col :span="4">
+                        <el-menu-item >数据挖掘分析平台</el-menu-item>
+                    </el-col>
+                    <el-col :span="18">
+                        <p></p>
+                    </el-col>
+                    <el-col :span="2">
+                        <el-menu-item><a href=""><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8.837 1.626c-.246-.835-1.428-.835-1.674 0l-.094.319A1.873 1.873 0 0 1 4.377 3.06l-.292-.16c-.764-.415-1.6.42-1.184 1.185l.159.292a1.873 1.873 0 0 1-1.115 2.692l-.319.094c-.835.246-.835 1.428 0 1.674l.319.094a1.873 1.873 0 0 1 1.115 2.693l-.16.291c-.415.764.42 1.6 1.185 1.184l.292-.159a1.873 1.873 0 0 1 2.692 1.116l.094.318c.246.835 1.428.835 1.674 0l.094-.319a1.873 1.873 0 0 1 2.693-1.115l.291.16c.764.415 1.6-.42 1.184-1.185l-.159-.291a1.873 1.873 0 0 1 1.116-2.693l.318-.094c.835-.246.835-1.428 0-1.674l-.319-.094a1.873 1.873 0 0 1-1.115-2.692l.16-.292c.415-.764-.42-1.6-1.185-1.184l-.291.159A1.873 1.873 0 0 1 8.93 1.945l-.094-.319zm-2.633-.283c.527-1.79 3.065-1.79 3.592 0l.094.319a.873.873 0 0 0 1.255.52l.292-.16c1.64-.892 3.434.901 2.54 2.541l-.159.292a.873.873 0 0 0 .52 1.255l.319.094c1.79.527 1.79 3.065 0 3.592l-.319.094a.873.873 0 0 0-.52 1.255l.16.292c.893 1.64-.902 3.434-2.541 2.54l-.292-.159a.873.873 0 0 0-1.255.52l-.094.319c-.527 1.79-3.065 1.79-3.592 0l-.094-.319a.873.873 0 0 0-1.255-.52l-.292.16c-1.64.893-3.433-.902-2.54-2.541l.159-.292a.873.873 0 0 0-.52-1.255l-.319-.094c-1.79-.527-1.79-3.065 0-3.592l.319-.094a.873.873 0 0 0 .52-1.255l-.16-.292c-.892-1.64.902-3.433 2.541-2.54l.292.159a.873.873 0 0 0 1.255-.52l.094-.319z"/>
+                            <path fill-rule="evenodd" d="M8 5.754a2.246 2.246 0 1 0 0 4.492 2.246 2.246 0 0 0 0-4.492zM4.754 8a3.246 3.246 0 1 1 6.492 0 3.246 3.246 0 0 1-6.492 0z"/>
+                          </svg></a></el-menu-item>
+                    </el-col>
+                </el-menu>
+                <el-main>
+                    <el-row>
+                        <el-col :span="11">
+                            <el-card class="box-card">
+                                <div slot="header" class="clearfix">
+                                    <span>数据来源</span>
+                                </div>
+                                <el-form label-width="90px">
+                                    <el-form-item label="文件">
+                                        <input type="file" @change="getDataFile($event)">
+                                    </el-form-item>
+                                    <el-form-item label="聚类数">
+                                        <el-input v-model="count"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="索引列">
+                                        <el-input v-model="indexCol"></el-input>
+                                    </el-form-item>
+                                </el-form>
+                            </el-card>
+                            <el-card class="box-card" style="margin-top:20px">
+                                <el-table :data="datasetPreview" height="300px">
+                                    <el-table-column label="数据预览">
+                                        <template slot-scope="scope">
+                                            {{scope.row}}
+                                        </template>
+                                    </el-table-column>
+                                </el-table>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="1">
+                            <p></p>
+                        </el-col>
+                        <el-col :span="11">
+                            <el-card class="box-card">
+                                <div slot="header" class="clearfix">
+                                    <span>分析结果</span>
+                                    <el-button type="primary" size="mini" style="float:right; margin-top:0" @click="getKmeansResult()">分析</el-button>
+                                </div>
+                                <el-table :data="result.clusters" height="200px" border="true">
+                                    <el-table-column label="聚类中心">
+                                        <template slot-scope="scope">
+                                            {{formatClusterCenter(scope.row)}}
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column label="个案数" prop="countPoints">
+                                    </el-table-column>
+                                </el-table>
+                                <el-table :data="result.points" height="300px" border="true">
+                                    <el-table-column label="数据点" prop="pointArray">
+                                        <template slot-scope="scope">
+                                            {{formatPoint(scope.row.pointArray)}}
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column label="聚类簇" prop="clusterId" sortable></el-table-column>
+                                    <el-table-column label="到中心点距离" prop="distance" sortable>
+                                        <template slot-scope="scope">
+                                            {{scope.row.distance.toFixed(2)}}
+                                        </template>
+                                    </el-table-column>
+                                </el-table>
+                            </el-card>
+                        </el-col>
+                    </el-row>
+                </el-main>
+            </el-col>
+        </el-row>
+    </div>
+</body>
+
+<script src="js/vue.js"></script>
+<script src="js/element-ui.js"></script>
+<script src="js/axios.min.js"></script>
+<script src="js/settings.js"></script>
+<script>
+    new Vue({
+        el: "#app",
+        data: {
+            result:{
+                clusters: null,
+                times : null,
+                points: null
+            },
+            datasetPreview: null,
+            dataFile: null,
+            count: null,
+            indexCol: null,
+        },
+        mounted(){
+            
+        },
+        methods: {
+            getKmeansResult(){
+                if(this.dataFile == null){
+                    this.$message({
+                        message: '请上传文件',
+                        type: 'warning'
+                    })
+                    return 
+                }
+                if(this.count == null || this.count <= 0){
+                    this.$message({
+                        message: '请正确输入聚类个数',
+                        type: 'warning'
+                    })
+                    return 
+                }
+                let that = this
+                let formData = new FormData()
+                formData.append("file", this.dataFile)
+                formData.append("count", this.count)
+                formData.append("indexCol", this.indexCol)
+                axios.post(config.baseUrl + '/kmeans/result', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                })
+                .then((response)=>{
+                    that.result = response.data
+                    console.log(that.result.points)
+                })
+            },
+            getDataFile(event){
+               this.dataFile = event.target.files[0]
+               if(this.dataFile == null || this.dataFile == undefined){
+                   return ;
+               }
+               let that = this
+               let formData = new FormData()
+               formData.append("file", this.dataFile)
+               axios.post(config.baseUrl + "/kmeans/preview", formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+               })
+               .then((response)=>{
+                   that.datasetPreview = response.data
+               })
+           },
+           getClusterPointSize(cluster){
+               return cluster.clusterPoints.length
+           },
+           formatClusterCenter(cluster){
+               let center = '('
+               for(let i = 0; i < cluster.center.length; i++){
+                    center = center + cluster.center[i].toFixed(2)
+                    if(i != cluster.center.length - 1){
+                        center += '，'
+                    }
+                    else{
+                        center += ')'
+                    }
+               }
+               return center
+           },
+           formatPoint(point){
+               let p = '('
+               for(let i = 0; i < point.length; i++){
+                    p = p + point[i].toFixed(2)
+                    if(i != point.length - 1){
+                        p += ', '
+                    }
+                    else{
+                        p += ')'
+                    }
+               }
+               return p
+           }
+        }
+    })
+</script>
+<style>
+body{
+    margin:0px;
+    background-color:#f0f5f5
+}
+</style>
+</html>
